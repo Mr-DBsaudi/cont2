@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صانع المحتوى الذكي</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #0f0f1a;
+    color: #e8e8f0;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+  .container { max-width: 800px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 32px; }
+  header h1 {
+    font-size: 2rem;
+    background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  header p { color: #888; font-size: 0.95rem; }
+
+  /* Settings Panel */
+  .settings-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1a1a2e;
+    border: 1px solid #2a2a45;
+    border-radius: 10px;
+    padding: 10px 16px;
+    color: #a78bfa;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: inherit;
+    margin-bottom: 12px;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .settings-toggle:hover { border-color: #a78bfa; }
+  .settings-panel {
+    background: #1a1a2e;
+    border: 1px solid #2a2a45;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .settings-panel.open { display: block; }
+  .settings-panel label {
+    display: block;
+    font-size: 0.82rem;
+    color: #a78bfa;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .settings-panel input {
+    width: 100%;
+    background: #0f0f1a;
+    border: 1px solid #2a2a45;
+    border-radius: 10px;
+    color: #e8e8f0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    direction: ltr;
+    transition: border-color 0.2s;
+  }
+  .settings-panel input:focus { outline: none; border-color: #a78bfa; }
+  .settings-hint {
+    font-size: 0.78rem;
+    color: #666;
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+  .settings-hint a { color: #60a5fa; text-decoration: none; }
+  .settings-hint a:hover { text-decoration: underline; }
+  .save-settings-btn {
+    margin-top: 14px;
+    background: #a78bfa22;
+    border: 1px solid #a78bfa44;
+    border-radius: 8px;
+    color: #a78bfa;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .save-settings-btn:hover { background: #a78bfa33; }
+  .sheet-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    margin-top: 10px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #666; }
+  .dot.connected { background: #34d399; }
+  .dot.disconnected { background: #f87171; }
+
+  .card {
+    background: #1a1a2e;
+    border: 1px solid #2a2a45;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .card label {
+    display: block;
+    font-size: 0.85rem;
+    color: #a78bfa;
+    margin-bottom: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  textarea {
+    width: 100%;
+    background: #0f0f1a;
+    border: 1px solid #2a2a45;
+    border-radius: 10px;
+    color: #e8e8f0;
+    padding: 14px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 140px;
+    direction: rtl;
+    line-height: 1.7;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { outline: none; border-color: #a78bfa; }
+
+  .tones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+  }
+  .tone-btn {
+    background: #0f0f1a;
+    border: 1px solid #2a2a45;
+    border-radius: 10px;
+    padding: 12px 8px;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .tone-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+  .tone-btn.active {
+    background: linear-gradient(135deg, #a78bfa22, #60a5fa22);
+    border-color: #a78bfa;
+    color: #a78bfa;
+    font-weight: 700;
+  }
+  .tone-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+
+  .generate-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #a78bfa, #60a5fa);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-bottom: 24px;
+  }
+  .generate-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .results { display: none; }
+  .results.visible { display: block; }
+
+  .result-card {
+    background: #1a1a2e;
+    border: 1px solid #2a2a45;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .result-title { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.5px; }
+  .result-title.hook { color: #f472b6; }
+  .result-title.rewrite { color: #60a5fa; }
+  .result-title.prompt-lbl { color: #34d399; }
+
+  .btns-row { display: flex; gap: 8px; }
+  .copy-btn {
+    background: #2a2a45;
+    border: none;
+    border-radius: 8px;
+    color: #aaa;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { background: #3a3a5a; color: #fff; }
+  .copy-btn.copied { background: #34d39933; color: #34d399; }
+
+  .result-text { line-height: 1.8; font-size: 0.95rem; color: #ddd; white-space: pre-wrap; }
+  .result-text.en { direction: ltr; font-style: italic; color: #aaa; }
+
+  .loading { text-align: center; padding: 40px; color: #888; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid #2a2a45;
+    border-top-color: #a78bfa;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error {
+    background: #2a1a1a;
+    border: 1px solid #ff6b6b44;
+    border-radius: 12px;
+    padding: 16px;
+    color: #ff8888;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  /* Save to Sheets button */
+  .save-sheet-btn {
+    width: 100%;
+    padding: 13px;
+    background: #1a2e1a;
+    border: 1px solid #34d39944;
+    border-radius: 12px;
+    color: #34d399;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .save-sheet-btn:hover { background: #1e3a1e; border-color: #34d399; }
+  .save-sheet-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .save-toast {
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: none;
+  }
+  .save-toast.success { background: #34d39922; color: #34d399; display: block; }
+  .save-toast.fail { background: #f8717122; color: #f87171; display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>✨ صانع المحتوى الذكي</h1>
+    <p>أعد صياغة محتواك، واحصل على الهوك وبرومبت الصورة بلحظة</p>
+  </header>
+
+  <!-- Settings -->
+  <button class="settings-toggle" onclick="toggleSettings()">
+    <span>⚙️ إعداد ربط Google Sheets</span>
+    <span id="settingsArrow">▼</span>
+  </button>
+  <div class="settings-panel" id="settingsPanel">
+    <label>🔗 رابط Google Apps Script (Web App URL)</label>
+    <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." />
+    <p class="settings-hint">
+      لا تملك رابطاً بعد؟ اتبع الخطوات أدناه لإنشائه مجاناً.<br>
+      بعد الإعداد الصق الرابط هنا واضغط حفظ.
+    </p>
+    <div class="sheet-status">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">غير مُعدّ</span>
+    </div>
+    <br>
+    <button class="save-settings-btn" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+  </div>
+
+  <!-- Instructions card -->
+  <div class="card" id="instructionsCard" style="display:none">
+    <label>📋 خطوات إعداد Google Apps Script</label>
+    <ol style="padding-right:18px; line-height:2; font-size:0.88rem; color:#ccc;">
+      <li>افتح <a href="https://sheets.google.com" target="_blank" style="color:#60a5fa;">Google Sheets</a> وأنشئ جدول بيانات جديد</li>
+      <li>من القائمة: <strong>Extensions → Apps Script</strong></li>
+      <li>احذف الكود الموجود والصق الكود التالي:</li>
+    </ol>
+    <pre style="background:#0f0f1a;border:1px solid #2a2a45;border-radius:8px;padding:14px;margin:12px 0;font-size:0.78rem;direction:ltr;overflow-x:auto;color:#34d399;">
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    new Date(),
+    data.tone,
+    data.originalText,
+    data.hook,
+    data.rewrite,
+    data.imagePrompt
+  ]);
+  return ContentService
+    .createTextOutput(JSON.stringify({status:"success"}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+    </pre>
+    <ol start="4" style="padding-right:18px; line-height:2; font-size:0.88rem; color:#ccc;">
+      <li>اضغط <strong>Deploy → New Deployment</strong></li>
+      <li>اختر النوع: <strong>Web App</strong></li>
+      <li>في "Who has access" اختر: <strong>Anyone</strong></li>
+      <li>اضغط <strong>Deploy</strong> وانسخ الرابط</li>
+      <li>الصق الرابط في الحقل أعلاه واضغط حفظ ✅</li>
+    </ol>
+    <p style="font-size:0.8rem;color:#666;margin-top:8px;">💡 أضف هذه العناوين لأول صف في الشيت: التاريخ | النغمة | النص الأصلي | الهوك | إعادة الصياغة | Prompt الصورة</p>
+  </div>
+
+  <div class="card">
+    <label>📝 المحتوى المراد إعادة صياغته</label>
+    <textarea id="inputText" placeholder="الصق محتواك هنا..."></textarea>
+  </div>
+
+  <div class="card">
+    <label>🎭 اختر النغمة</label>
+    <div class="tones">
+      <button class="tone-btn" data-tone="رسمية"><span class="tone-icon">🎩</span>رسمية</button>
+      <button class="tone-btn" data-tone="قصة تجربة عملية"><span class="tone-icon">📖</span>قصة تجربة</button>
+      <button class="tone-btn" data-tone="أكاديمية"><span class="tone-icon">🎓</span>أكاديمية</button>
+      <button class="tone-btn" data-tone="مضحكة"><span class="tone-icon">😄</span>مضحكة</button>
+      <button class="tone-btn" data-tone="مشوقة"><span class="tone-icon">🔥</span>مشوقة</button>
+    </div>
+  </div>
+
+  <button class="generate-btn" id="genBtn" onclick="generate()">⚡ توليد المحتوى</button>
+
+  <div class="results" id="results">
+    <div id="loadingDiv" class="loading" style="display:none">
+      <div class="spinner"></div>
+      <p>جارٍ تحليل المحتوى وإعادة الصياغة...</p>
+    </div>
+    <div id="errorDiv" class="error" style="display:none"></div>
+
+    <div id="outputCards" style="display:none">
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-title hook">🪝 الهوك</span>
+          <div class="btns-row">
+            <button class="copy-btn" onclick="copyText('hookText', this)">نسخ</button>
+          </div>
+        </div>
+        <div class="result-text" id="hookText"></div>
+      </div>
+
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-title rewrite">✍️ إعادة الصياغة</span>
+          <div class="btns-row">
+            <button class="copy-btn" onclick="copyText('rewriteText', this)">نسخ</button>
+          </div>
+        </div>
+        <div class="result-text" id="rewriteText"></div>
+      </div>
+
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-title prompt-lbl">🎨 Prompt الصورة</span>
+          <div class="btns-row">
+            <button class="copy-btn" onclick="copyText('promptText', this)">نسخ</button>
+          </div>
+        </div>
+        <div class="result-text en" id="promptText"></div>
+      </div>
+
+      <!-- Save to Sheets -->
+      <button class="save-sheet-btn" id="saveSheetBtn" onclick="saveToSheet()">
+        <span>📊</span> حفظ في Google Sheets
+      </button>
+      <div class="save-toast" id="saveToast"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedTone = '';
+  let lastResult = null;
+
+  // Load saved URL
+  const savedUrl = localStorage.getItem('appsScriptUrl') || '';
+  if (savedUrl) {
+    document.getElementById('scriptUrl').value = savedUrl;
+    updateStatus(true);
+  }
+
+  function toggleSettings() {
+    const panel = document.getElementById('settingsPanel');
+    const arrow = document.getElementById('settingsArrow');
+    const instructions = document.getElementById('instructionsCard');
+    const open = panel.classList.toggle('open');
+    arrow.textContent = open ? '▲' : '▼';
+    instructions.style.display = open ? 'block' : 'none';
+  }
+
+  function saveSettings() {
+    const url = document.getElementById('scriptUrl').value.trim();
+    if (!url.startsWith('https://script.google.com')) {
+      alert('يرجى إدخال رابط Apps Script صحيح');
+      return;
+    }
+    localStorage.setItem('appsScriptUrl', url);
+    updateStatus(true);
+    alert('✅ تم حفظ الإعدادات');
+  }
+
+  function updateStatus(connected) {
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+    dot.className = 'dot ' + (connected ? 'connected' : 'disconnected');
+    txt.textContent = connected ? 'مُتصل بـ Google Sheets' : 'غير مُعدّ';
+  }
+
+  document.querySelectorAll('.tone-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedTone = btn.dataset.tone;
+    });
+  });
+
+  async function generate() {
+    const text = document.getElementById('inputText').value.trim();
+    if (!text) { alert('يرجى إدخال المحتوى أولاً'); return; }
+    if (!selectedTone) { alert('يرجى اختيار النغمة أولاً'); return; }
+
+    const btn = document.getElementById('genBtn');
+    const results = document.getElementById('results');
+    const loading = document.getElementById('loadingDiv');
+    const errorDiv = document.getElementById('errorDiv');
+    const outputCards = document.getElementById('outputCards');
+    const toast = document.getElementById('saveToast');
+
+    btn.disabled = true;
+    results.classList.add('visible');
+    loading.style.display = 'block';
+    errorDiv.style.display = 'none';
+    outputCards.style.display = 'none';
+    toast.className = 'save-toast';
+
+    const systemPrompt = `أنت خبير في صناعة المحتوى الرقمي والكتابة الإبداعية. مهمتك إعادة صياغة المحتوى المُدخل وفق النغمة المطلوبة وتقديم ثلاثة مخرجات بتنسيق JSON فقط بدون أي نص إضافي.
+
+النغمات:
+- رسمية: لغة راقية ومحترفة تناسب الشركات والمؤسسات
+- قصة تجربة عملية: سرد شخصي حقيقي يحكي تجربة مررت بها
+- أكاديمية: أسلوب علمي موثق بمصطلحات متخصصة
+- مضحكة: خفيفة الظل مع سخرية لطيفة وطرافة
+- مشوقة: إثارة وتشويق وكأن القارئ في مغامرة
+
+أعد الرد بهذا التنسيق JSON فقط:
+{
+  "hook": "جملة افتتاحية قوية وجذابة تناسب النغمة المختارة",
+  "rewrite": "النص المُعاد صياغته بالكامل وفق النغمة المطلوبة",
+  "imagePrompt": "A detailed image generation prompt in English that visually represents the content theme, photorealistic style, high quality"
+}`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: `النغمة: ${selectedTone}\n\nالمحتوى:\n${text}` }]
+        })
+      });
+
+      const data = await res.json();
+      const raw = data.content.map(i => i.text || '').join('');
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+
+      document.getElementById('hookText').textContent = parsed.hook;
+      document.getElementById('rewriteText').textContent = parsed.rewrite;
+      document.getElementById('promptText').textContent = parsed.imagePrompt;
+
+      lastResult = {
+        tone: selectedTone,
+        originalText: text,
+        hook: parsed.hook,
+        rewrite: parsed.rewrite,
+        imagePrompt: parsed.imagePrompt
+      };
+
+      loading.style.display = 'none';
+      outputCards.style.display = 'block';
+    } catch (err) {
+      loading.style.display = 'none';
+      errorDiv.style.display = 'block';
+      errorDiv.textContent = 'حدث خطأ أثناء التوليد. يرجى المحاولة مرة أخرى.';
+    }
+
+    btn.disabled = false;
+  }
+
+  async function saveToSheet() {
+    const url = localStorage.getItem('appsScriptUrl');
+    if (!url) {
+      alert('يرجى إعداد رابط Google Apps Script أولاً من إعدادات الربط أعلاه');
+      toggleSettings();
+      return;
+    }
+    if (!lastResult) return;
+
+    const saveBtn = document.getElementById('saveSheetBtn');
+    const toast = document.getElementById('saveToast');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span>⏳</span> جارٍ الحفظ...';
+
+    try {
+      await fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lastResult)
+      });
+      toast.textContent = '✅ تم الحفظ في Google Sheets بنجاح!';
+      toast.className = 'save-toast success';
+    } catch (err) {
+      toast.textContent = '❌ فشل الحفظ. تحقق من رابط Apps Script.';
+      toast.className = 'save-toast fail';
+    }
+
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span>📊</span> حفظ في Google Sheets';
+    setTimeout(() => { toast.className = 'save-toast'; }, 4000);
+  }
+
+  function copyText(id, btn) {
+    const text = document.getElementById(id).textContent;
+    if (!text || !text.trim()) {
+      btn.textContent = '! لا يوجد نص';
+      setTimeout(() => { btn.textContent = 'نسخ'; }, 2000);
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '✓ تم النسخ';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'نسخ'; btn.classList.remove('copied'); }, 2000);
+      }).catch(() => fallbackCopy(text, btn));
+    } else {
+      fallbackCopy(text, btn);
+    }
+  }
+
+  function fallbackCopy(text, btn) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try {
+      document.execCommand('copy');
+      btn.textContent = '✓ تم النسخ';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'نسخ'; btn.classList.remove('copied'); }, 2000);
+    } catch {
+      btn.textContent = '✗ فشل النسخ';
+      setTimeout(() => { btn.textContent = 'نسخ'; }, 2000);
+    }
+    document.body.removeChild(ta);
+  }
+</script>
+</body>
+</html>
